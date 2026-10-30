@@ -39,6 +39,45 @@ Google Maps doesn't know how people actually move around campus: the shortcut be
 
 Gemma only **rewords** the route into directions. It never decides or invents the route.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Sender as Sender (User)
+    participant FE as Frontend (React/Leaflet)
+    participant BE as Backend (Rust/Axum)
+    participant Gemma as Gemma API
+    participant Sol as Solana (ruto_program)
+    actor Recipient as Recipient (User)
+
+    %% Sender flow
+    Sender->>FE: Draw route (connect dots on map)
+    FE->>BE: Submit drawn route (coordinates & notes)
+    BE->>Gemma: Request direction text (English, Pidgin, Yoruba)
+    Gemma-->>BE: Return formatted step-by-step directions
+    BE->>BE: Generate canonical JSON & SHA-256 hash
+    BE->>BE: Store full route JSON in Database
+    BE->>Sol: Sign & execute send_route_card(route_hash)
+    Sol-->>BE: Confirm Card account creation
+    BE-->>FE: Return success & card link
+
+    %% Recipient flow
+    Recipient->>FE: Open route card link
+    FE->>BE: Request card details & route JSON
+    BE->>Sol: Read Card account state & onchain hash
+    Sol-->>BE: Return onchain route_hash
+    BE->>BE: Recompute SHA-256 hash from DB route JSON
+    alt Hash Matches (Verified)
+        BE-->>FE: Return route data (Status: Verified)
+        FE-->>Recipient: Display route, directions & map
+        Recipient->>FE: Click Accept Card
+        FE->>BE: Submit acceptance
+        BE->>Sol: Execute respond_card(accept=true)
+    else Hash Mismatch (Tampered)
+        BE-->>FE: Flag mismatch (Status: Changed)
+        FE-->>Recipient: Display warning & block acceptance
+    end
+```
+
 ## Architecture
 
 | Part | Tech |
