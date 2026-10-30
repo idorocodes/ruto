@@ -39,51 +39,13 @@ Google Maps doesn't know how people actually move around campus: the shortcut be
 
 Gemma only **rewords** the route into directions. It never decides or invents the route.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Sender as Sender (User)
-    participant FE as Frontend (React/Leaflet)
-    participant BE as Backend (Rust/Axum)
-    participant Gemma as Gemma API
-    participant Sol as Solana (ruto_program)
-    actor Recipient as Recipient (User)
-
-    %% Sender flow
-    Sender->>FE: Draw route (connect dots on map)
-    FE->>BE: Submit drawn route (coordinates & notes)
-    BE->>Gemma: Request direction text (English, Pidgin, Yoruba)
-    Gemma-->>BE: Return formatted step-by-step directions
-    BE->>BE: Generate canonical JSON & SHA-256 hash
-    BE->>BE: Store full route JSON in Database
-    BE->>Sol: Sign & execute send_route_card(route_hash)
-    Sol-->>BE: Confirm Card account creation
-    BE-->>FE: Return success & card link
-
-    %% Recipient flow
-    Recipient->>FE: Open route card link
-    FE->>BE: Request card details & route JSON
-    BE->>Sol: Read Card account state & onchain hash
-    Sol-->>BE: Return onchain route_hash
-    BE->>BE: Recompute SHA-256 hash from DB route JSON
-    alt Hash Matches (Verified)
-        BE-->>FE: Return route data (Status: Verified)
-        FE-->>Recipient: Display route, directions & map
-        Recipient->>FE: Click Accept Card
-        FE->>BE: Submit acceptance
-        BE->>Sol: Execute respond_card(accept=true)
-    else Hash Mismatch (Tampered)
-        BE-->>FE: Flag mismatch (Status: Changed)
-        FE-->>Recipient: Display warning & block acceptance
-    end
-```
+![Ruto System Architecture Sequence Diagram](https://mermaid.ink/svg/pako:eNqNlGtr2zAUhv_KQR9KCo2bOM3NsEKarms-jIUGBhuBoMqntoglebK8piv97zvyJU3bMJZPkfy85_Keg56ZMDGyiK11gb9K1AKvJU8sV2sN9OOlM7pU92ibs3DGwgp13N7k3DopZM61g1meAy_gxhrtCIHOHZLg9Ai4XHjwiottxc12pTqGVdQXVIp7yUdgaY2v1VMrk3HNoWOp4k1e358eFn2HJJKo3VrX13UX3ctLKjuCfgDXlj-CNaVDiI0rwGhQPK9hYjy5XEQQBrAq75V0DSuMsbHU3GHRsMuFZwkdBJSWbC0cxNKicNLoAjqfdZLJIj1fyjiR-vyHseU9b4qdLbptoguvdqXV4HB3GOFNGk8OqSTqEZuKpIbrKzihylTuz6vbWTccjiDlRXqobeyLYER6mWiSSP3bbBEK8mZTBdsIbuOOVzYFNqJ9leMA5kY_SKtgTii5LUxJsxEWyZL4NV_r9CSowT1QI_v5tNw0gG856tZlknwYRb8XwA06kVafIUbHZVYcbbHf927ymKYqUi6bsJv3ltRhQ8-27nkEHqxR3tRKVQua5coc3HriK6c62hV43_PKcVcWEXxHKx9k60rbDVH77olNzePhupy8buFRn-aZFFuYCYG5exu3aafZVv6eeGvQop68xSI3NPxq7LUEPoGzJTbzx6zApmNZKN_0v1uep1wn_9HxI7da6gQ6V5mhfurUbU5NenbGEitjFvlizphCq7g_smcPrZlLUeGaRfTXYlzuujG3264wmbFret9eSE-Pxk9jVBuChpmk7aHMY1rH5vXbE9UbMfcLzaJJFYBFz2zHonASTAfjYa83GYxGk3EY0tcnFo0HYXAxnVyEo7A3HYejlzP2p8rYCybj4ctfBNu3jw)
 
 ## Architecture
 
 | Part | Tech |
 |------|------|
-| Backend | Rust, Axum |
-| Frontend | React, Leaflet, OpenStreetMap tiles |
+| Backend | Rust, Axum || Frontend | React, Leaflet, OpenStreetMap tiles |
 | Directions | Gemma (hosted API) |
 | Onchain | `ruto_program`, an Anchor program on Solana devnet |
 | Storage | Route JSON and profile details in the backend database |
