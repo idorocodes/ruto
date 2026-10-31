@@ -1,0 +1,298 @@
+{
+  "address": "8P89qgZbZZYcwKe7NSa6F13LDeyk78dXWcYLUoEjrFF8",
+  "metadata": {
+    "name": "ruto_program",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Profiles and sendable route/profile cards for Ruto"
+  },
+  "instructions": [
+    {
+      "name": "create_profile",
+      "docs": [
+        "Creates a profile. The handle is the PDA seed, so a taken handle makes `init` fail.",
+        "`data_hash` is a hash of the off-chain profile data, never the data itself."
+      ],
+      "discriminator": [225, 205, 234, 143, 17, 186, 50, 220],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] }
+        },
+        { "name": "authority", "writable": true, "signer": true, "relations": ["config"] },
+        {
+          "name": "profile",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [112, 114, 111, 102, 105, 108, 101] },
+              { "kind": "arg", "path": "handle" }
+            ]
+          }
+        },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "handle", "type": "string" },
+        { "name": "avatar_id", "type": "u8" },
+        { "name": "data_hash", "type": { "array": ["u8", 32] } }
+      ]
+    },
+    {
+      "name": "initialize_config",
+      "docs": [
+        "Run once right after deploy. The signer becomes the only authority that can",
+        "create profiles and send or resolve cards."
+      ],
+      "discriminator": [208, 127, 21, 1, 194, 190, 196, 70],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] }
+        },
+        { "name": "authority", "writable": true, "signer": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "respond_card",
+      "docs": ["Accepts or declines a pending card. A card can only be resolved once."],
+      "discriminator": [40, 138, 155, 188, 25, 244, 242, 206],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] }
+        },
+        { "name": "authority", "signer": true, "relations": ["config"] },
+        {
+          "name": "recipient_profile",
+          "docs": [
+            "Must be the recipient the card was addressed to: the card PDA is derived from it."
+          ]
+        },
+        {
+          "name": "card",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 97, 114, 100] },
+              { "kind": "account", "path": "recipient_profile" },
+              { "kind": "account", "path": "card.index", "account": "Card" }
+            ]
+          }
+        }
+      ],
+      "args": [{ "name": "accept", "type": "bool" }]
+    },
+    {
+      "name": "send_profile_card",
+      "docs": [
+        "Sends a profile card that points at an existing profile (often the sender's own)."
+      ],
+      "discriminator": [89, 6, 57, 173, 96, 110, 20, 213],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] }
+        },
+        { "name": "authority", "writable": true, "signer": true, "relations": ["config"] },
+        { "name": "sender_profile", "writable": true },
+        { "name": "recipient_profile", "writable": true },
+        {
+          "name": "shared_profile",
+          "docs": ["The profile being shared. Cannot be the recipient's own profile."]
+        },
+        {
+          "name": "card",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 97, 114, 100] },
+              { "kind": "account", "path": "recipient_profile" },
+              {
+                "kind": "account",
+                "path": "recipient_profile.inbox_count",
+                "account": "Profile"
+              }
+            ]
+          }
+        },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "send_route_card",
+      "docs": [
+        "Sends a route card. `route_hash` is the SHA-256 of the canonical route that the",
+        "backend stores off chain. The recipient re-hashes it before accepting."
+      ],
+      "discriminator": [41, 254, 163, 47, 23, 222, 161, 244],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] }
+        },
+        { "name": "authority", "writable": true, "signer": true, "relations": ["config"] },
+        { "name": "sender_profile", "writable": true },
+        { "name": "recipient_profile", "writable": true },
+        {
+          "name": "card",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 97, 114, 100] },
+              { "kind": "account", "path": "recipient_profile" },
+              {
+                "kind": "account",
+                "path": "recipient_profile.inbox_count",
+                "account": "Profile"
+              }
+            ]
+          }
+        },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [{ "name": "route_hash", "type": { "array": ["u8", 32] } }]
+    }
+  ],
+  "accounts": [
+    { "name": "Card", "discriminator": [166, 250, 46, 230, 152, 63, 140, 182] },
+    { "name": "Config", "discriminator": [155, 12, 170, 224, 30, 250, 204, 130] },
+    { "name": "Profile", "discriminator": [184, 101, 165, 188, 95, 63, 127, 188] }
+  ],
+  "events": [
+    { "name": "CardResolved", "discriminator": [50, 97, 81, 147, 243, 121, 176, 99] },
+    { "name": "CardSent", "discriminator": [52, 36, 180, 151, 59, 88, 38, 253] },
+    { "name": "ProfileCreated", "discriminator": [134, 233, 199, 153, 77, 206, 128, 94] }
+  ],
+  "errors": [
+    { "code": 6000, "name": "Unauthorized", "msg": "Signer is not the program authority" },
+    {
+      "code": 6001,
+      "name": "InvalidHandle",
+      "msg": "Handle must be 3-20 characters: lowercase a-z, 0-9 or underscore"
+    },
+    { "code": 6002, "name": "SelfSend", "msg": "A card cannot be sent to yourself" },
+    {
+      "code": 6003,
+      "name": "AlreadyResolved",
+      "msg": "This card was already accepted or declined"
+    },
+    { "code": 6004, "name": "Overflow", "msg": "Counter overflow" },
+    {
+      "code": 6005,
+      "name": "InvalidSharedProfile",
+      "msg": "A profile card cannot share the recipient's own profile"
+    }
+  ],
+  "types": [
+    {
+      "name": "Card",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "sender", "docs": ["Sender's Profile PDA."], "type": "pubkey" },
+          { "name": "recipient", "docs": ["Recipient's Profile PDA."], "type": "pubkey" },
+          { "name": "kind", "type": { "defined": { "name": "CardKind" } } },
+          {
+            "name": "route_hash",
+            "docs": ["SHA-256 of the canonical route. All zeros for profile cards."],
+            "type": { "array": ["u8", 32] }
+          },
+          {
+            "name": "shared_profile",
+            "docs": ["Profile being shared. Pubkey::default() for route cards."],
+            "type": "pubkey"
+          },
+          { "name": "status", "type": { "defined": { "name": "CardStatus" } } },
+          { "name": "index", "type": "u32" },
+          { "name": "created_at", "type": "i64" },
+          {
+            "name": "resolved_at",
+            "docs": ["0 until the card is accepted or declined."],
+            "type": "i64"
+          },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "CardKind",
+      "type": { "kind": "enum", "variants": [{ "name": "Route" }, { "name": "Profile" }] }
+    },
+    {
+      "name": "CardResolved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "card", "type": "pubkey" },
+          { "name": "status", "type": { "defined": { "name": "CardStatus" } } }
+        ]
+      }
+    },
+    {
+      "name": "CardSent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "card", "type": "pubkey" },
+          { "name": "sender", "type": "pubkey" },
+          { "name": "recipient", "type": "pubkey" },
+          { "name": "kind", "type": { "defined": { "name": "CardKind" } } },
+          { "name": "index", "type": "u32" }
+        ]
+      }
+    },
+    {
+      "name": "CardStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [{ "name": "Pending" }, { "name": "Accepted" }, { "name": "Declined" }]
+      }
+    },
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "pubkey" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Profile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "handle", "type": "string" },
+          { "name": "avatar_id", "type": "u8" },
+          { "name": "data_hash", "type": { "array": ["u8", 32] } },
+          {
+            "name": "inbox_count",
+            "docs": [
+              "Cards received so far. Also the index of the next card sent to this profile."
+            ],
+            "type": "u32"
+          },
+          { "name": "sent_count", "type": "u32" },
+          { "name": "created_at", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "ProfileCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "profile", "type": "pubkey" },
+          { "name": "handle", "type": "string" }
+        ]
+      }
+    }
+  ]
+}

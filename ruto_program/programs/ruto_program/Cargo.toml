@@ -1,9 +1,8 @@
 [package]
 name = "ruto_program"
 version = "0.1.0"
-description = "Created with Anchor"
-edition.workspace = true
-rust-version.workspace = true
+description = "Profiles and sendable route/profile cards for Ruto"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -13,22 +12,14 @@ name = "ruto_program"
 default = []
 cpi = ["no-entrypoint"]
 no-entrypoint = []
+no-idl = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build"]
 anchor-debug = []
 custom-heap = []
 custom-panic = []
-
-
 [dependencies]
-anchor-lang = "1.1.2"
-
-[dev-dependencies]
-litesvm = "0.10.0"
-solana-message = "3.0.1"
-solana-transaction = "3.0.2"
-solana-signer = "3.0.0"
-solana-keypair = "3.0.1"
+anchor-lang = "0.31.1"
 
 
 [lints.rust]

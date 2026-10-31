@@ -1,0 +1,6 @@
+{
+  "name": "Ruto",
+  "description": "Peer-to-peer campus route cards powered by Gemma 4. Draw campus paths, generate directions in English, Pidgin, or Yoruba, and verify SHA-256 integrity before accepting.",
+  "requestFramePermissions": ["geolocation", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
