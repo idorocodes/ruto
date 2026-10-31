@@ -1,33 +1,26 @@
 use anchor_lang::prelude::*;
 
-use crate::{constants::*, state::Counter};
+use crate::{constants::*, state::Config};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
-    pub payer: Signer<'info>,
+    pub signer: Signer<'info>,
     #[account(
         init,
-        payer = payer,
-        space = 8 + Counter::INIT_SPACE,
-        seeds = [COUNTER_SEED],
+        payer = signer,
+        space = 8 + Config::INIT_SPACE,
+        seeds = [CONFIG_SEED],
         bump
     )]
-    pub counter: Account<'info, Counter>,
+    pub protocol: Account<'info, Config>,
     pub system_program: Program<'info, System>,
 }
 
 pub fn handle_initialize(ctx: Context<Initialize>) -> Result<()> {
-    ctx.accounts.counter.count = 0;
-    ctx.accounts.counter.authority = ctx.accounts.payer.key();
+    ctx.accounts.protocol.authority = ctx.accounts.signer.key();
+    ctx.accounts.protocol.bumb = ctx.bumps.protocol;
 
-    let cpi_accounts = anchor_lang::system_program::Transfer {
-        from: ctx.accounts.payer.to_account_info(),
-        to: ctx.accounts.counter.to_account_info(),
-    };
-    let cpi_ctx = CpiContext::new(anchor_lang::system_program::ID, cpi_accounts);
-    anchor_lang::system_program::transfer(cpi_ctx, HELLO_WORLD_LAMPORTS)?;
-
-    msg!("Hello, world! Counter initialized");
+    msg!("Hello, fuoye!, protocol initialized");
     Ok(())
 }
